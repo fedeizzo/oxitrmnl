@@ -1,0 +1,463 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "v0.0.1",
+    "title": "oxitrml webserver API",
+    "description": "API for interacting with oxitrmnl webserver",
+    "contact": {
+      "name": "Federico Izzo",
+      "url": "https://github.com/fedeizzo/oxitrmnl",
+      "email": "example@example.com"
+    },
+    "license": {
+      "url": "https://mit-license.org/",
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://your-app-base-url.com/api"
+    }
+  ],
+  "paths": {
+    "/setup": {
+      "get": {
+        "summary": "Set up or retrieve device information.",
+        "description": "Attempts to retrieve device information based on the 'ID' (MAC address) header.\nIf the device is not found, and an 'Access-Token' (API key) is provided, it tries to find the device by API key and update its MAC address.\nIf neither is found, a new device is created.\n",
+        "operationId": "get-setup",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/accessTokenHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/deviceInfoResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/missingIdHeader"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "servers": [
+          {
+            "url": "http://your-app-base-url.com/api"
+          }
+        ]
+      }
+    },
+    "/log": {
+      "post": {
+        "summary": "Receive and process device logs.",
+        "description": "Accepts a POST request with device logs and attempts to identify the device\nusing the 'ID' (MAC address) and 'Access-Token' (API key) headers.\nIf the device is found or created, the logs are stored.\n",
+        "operationId": "post-log",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/accessTokenHeader"
+          },
+          {
+            "$ref": "#/components/parameters/refreshRateHeader"
+          },
+          {
+            "$ref": "#/components/parameters/batteryVoltageHeader"
+          },
+          {
+            "$ref": "#/components/parameters/firmwareVersionHeader"
+          },
+          {
+            "$ref": "#/components/parameters/rssiHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/logReceivedResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/noDeviceFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "servers": [
+          {
+            "url": "http://your-app-base-url.com/api"
+          }
+        ]
+      }
+    },
+    "/display": {
+      "get": {
+        "summary": "Retrieve display information for a device.",
+        "description": "Retrieves the image URL and refresh rate for a device based on its\n'Access-Token' (API key) and 'ID' (MAC address) headers. It also handles\ndevice identification and creation if the device is not found.\n",
+        "operationId": "get-display",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/accessTokenHeader"
+          },
+          {
+            "$ref": "#/components/parameters/deviceIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/refreshRateHeader"
+          },
+          {
+            "$ref": "#/components/parameters/batteryVoltageHeader"
+          },
+          {
+            "$ref": "#/components/parameters/firmwareVersionHeader"
+          },
+          {
+            "$ref": "#/components/parameters/rssiHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/displayInfoResponse"
+          },
+          "500": {
+            "description": "Device not found or internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "reset_firmware": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "image_url": {
+                          "type": "string",
+                          "description": "URL of the 'not found' image."
+                        },
+                        "filename": {
+                          "type": "string",
+                          "description": "Filename of the 'not found' image."
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "http://your-app-base-url.com/api"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "deviceIdHeader": {
+        "name": "ID",
+        "in": "header",
+        "description": "The MAC address of the device (case-insensitive). Used for device identification.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "accessTokenHeader": {
+        "name": "Access-Token",
+        "in": "header",
+        "description": "The API key of the device. Used for device identification and authorization.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "refreshRateHeader": {
+        "name": "Refresh-Rate",
+        "in": "header",
+        "description": "The device's reported refresh rate in seconds.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "batteryVoltageHeader": {
+        "name": "Battery-Voltage",
+        "in": "header",
+        "description": "The device's battery voltage.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "firmwareVersionHeader": {
+        "name": "FW-Version",
+        "in": "header",
+        "description": "The device's firmware version.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "rssiHeader": {
+        "name": "RSSI",
+        "in": "header",
+        "description": "The device's Received Signal Strength Indication.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "deviceInfoResponse": {
+        "description": "Successful device information response.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DeviceInfo"
+            }
+          }
+        }
+      },
+      "logReceivedResponse": {
+        "description": "Successful log reception.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "example": 200
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Log received"
+                }
+              }
+            }
+          }
+        }
+      },
+      "displayInfoResponse": {
+        "description": "Successful retrieval of display information.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DisplayInfo"
+            }
+          }
+        }
+      },
+      "missingIdHeader": {
+        "description": "Missing ID header.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DeviceInfo"
+            }
+          }
+        }
+      },
+      "internalServerError": {
+        "description": "Internal server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "noDeviceFound": {
+        "description": "No device found or created.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "example": 400
+                },
+                "message": {
+                  "type": "string",
+                  "example": "No device found or created"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "LogRequest": {
+        "type": "object",
+        "properties": {
+          "log": {
+            "type": "object",
+            "properties": {
+              "logs_array": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LogEntry"
+                }
+              }
+            },
+            "required": [
+              "logs_array"
+            ]
+          }
+        }
+      },
+      "LogEntry": {
+        "type": "object",
+        "properties": {
+          "creation_timestamp": {
+            "type": "integer",
+            "description": "Unix timestamp of the log entry creation."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "level": {
+            "type": "string",
+            "nullable": true
+          },
+          "device_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "battery_voltage": {
+            "type": "number",
+            "nullable": true
+          },
+          "rssi": {
+            "type": "integer",
+            "nullable": true
+          },
+          "firmware_version": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "creation_timestamp"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 500
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DeviceInfo": {
+        "type": "object",
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "nullable": true,
+            "description": "The API key of the device."
+          },
+          "friendly_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "A human-readable ID for the device."
+          },
+          "image_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL for a device image."
+          },
+          "filename": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filename of a device image."
+          },
+          "message": {
+            "type": "string",
+            "description": "A message indicating the outcome of the request."
+          },
+          "reset_firmware": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Flag indicating if a firmware reset is needed."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message."
+          },
+          "status": {
+            "type": "integer",
+            "example": 200
+          }
+        }
+      },
+      "DisplayInfo": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 0
+          },
+          "image_url": {
+            "type": "string",
+            "description": "URL of the image to display."
+          },
+          "filename": {
+            "type": "string",
+            "description": "Filename of the image."
+          },
+          "refresh_rate": {
+            "type": "integer",
+            "description": "The refresh rate for the device in seconds (multiplied by 3 internally)."
+          },
+          "reset_firmware": {
+            "type": "boolean",
+            "example": false
+          },
+          "update_firmware": {
+            "type": "boolean",
+            "example": false
+          },
+          "firmware_url": {
+            "type": "string"
+          },
+          "special_function": {
+            "type": "string",
+            "example": "restart_playlist"
+          }
+        }
+      }
+    }
+  }
+}

@@ -23,6 +23,7 @@
           buildInputs = [
             openssl
             pkg-config
+            openapi-generator-cli
             (rust-bin.stable.latest.default.override {
               extensions = [ "rust-analyzer" "rust-src" "rustfmt" "clippy" ];
             })
