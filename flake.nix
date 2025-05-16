@@ -24,6 +24,8 @@
             openssl
             pkg-config
             openapi-generator-cli
+            sqlite.out
+            sqlite-web
             (rust-bin.stable.latest.default.override {
               extensions = [ "rust-analyzer" "rust-src" "rustfmt" "clippy" ];
             })
