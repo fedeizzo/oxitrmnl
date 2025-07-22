@@ -1,6 +1,4 @@
-use std::fs::read;
-
-use log::{error, info};
+use log::error;
 use rusqlite::{types::FromSqlError, Connection};
 
 use crate::domain::device::{

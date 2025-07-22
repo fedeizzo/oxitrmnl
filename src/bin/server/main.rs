@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use env_logger::{builder, init_from_env, Builder, Env};
+use env_logger::{init_from_env, Env};
 use log::info;
 use oxitrmnl::{
     config,

@@ -1,6 +1,5 @@
 use std::{env, fmt::Display};
 
-use log::LevelFilter;
 
 const DATABASE_URL: &str = "DATABASE_URL";
 

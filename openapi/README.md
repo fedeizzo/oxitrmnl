@@ -12,7 +12,7 @@ server, you can easily generate a server stub.
 To see how to make this your own, look here: [README]((https://openapi-generator.tech))
 
 - API version: v0.0.1
-- Build date: 2025-07-23T10:05:37.254927630+02:00[Europe/Paris]
+- Build date: 2025-05-15T18:13:30.487858628+02:00[Europe/Paris]
 - Generator version: 7.13.0
 
 For more information, please visit [https://github.com/fedeizzo/oxitrmnl](https://github.com/fedeizzo/oxitrmnl)
