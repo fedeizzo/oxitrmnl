@@ -1,5 +1,6 @@
 /target
-data.db
+*.db
+*.db-shm
 
 # nix
 .direnv

@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO devices(api_key, mac_address) VALUES (?, ?) RETURNING api_key, mac_address, '' as friendly_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "api_key",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "mac_address",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "friendly_id",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "399d6fd978424d065304f7bfe50090da0b326084805656c02bb634eaa290fca5"
+}

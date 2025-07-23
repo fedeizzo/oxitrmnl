@@ -1,14 +1,21 @@
 use std::fmt::Display;
 
+use rand::{distr::Alphanumeric, Rng};
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Device {
-    api_key: String,
-    mac_address: MacAddress,
-    friendly_name: String,
+    pub api_key: String,
+    pub mac_address: MacAddress,
+    pub friendly_name: String,
 }
 
 impl Device {
     pub fn new(api_key: String, mac_address: MacAddress) -> Device {
+        let mut api_key = api_key;
+        if api_key.is_empty() {
+            api_key = Device::generate_api_key();
+        }
+
         return Device {
             api_key,
             mac_address,
@@ -26,6 +33,11 @@ impl Device {
 
     pub fn update_friendly_name(&mut self, friendly_name: String) {
         self.friendly_name = friendly_name
+    }
+
+    pub fn generate_api_key() -> String {
+        let mut rng = rand::rng();
+        (0..20).map(|_| rng.sample(Alphanumeric) as char).collect()
     }
 }
 

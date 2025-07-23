@@ -23,18 +23,18 @@ where
 
 impl<R> DeviceService for Service<R>
 where
-    R: DeviceRepository,
+    R: DeviceRepository + std::marker::Sync,
 {
-    fn create_device(&self, request: &CreateDeviceRequest) -> Result<Device, DeviceError> {
-        let result = self.repo.create_device(request)?;
+    async fn create_device(&self, request: &CreateDeviceRequest) -> Result<Device, DeviceError> {
+        let result = self.repo.create_device(request).await?;
 
         info!("new device created, mac address: {}", request.mac_address);
 
         Ok(result)
     }
 
-    fn get_device(&self, request: &GetDeviceRequest) -> Result<Device, DeviceError> {
-        let result = self.repo.get_device(request)?;
+    async fn get_device(&self, request: &GetDeviceRequest) -> Result<Device, DeviceError> {
+        let result = self.repo.get_device(request).await?;
 
         debug!(
             "got device from repository, mac address: {}",

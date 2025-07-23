@@ -1,5 +1,5 @@
 use log::error;
-use rusqlite::{types::FromSqlError, Connection};
+use sqlx::{query_as, SqlitePool};
 
 use crate::domain::device::{
     models::device::{CreateDeviceRequest, Device, DeviceError, GetDeviceRequest, MacAddress},
@@ -7,52 +7,76 @@ use crate::domain::device::{
 };
 
 pub struct SQLite {
-    connection: Connection,
+    connection: SqlitePool,
 }
 
 impl SQLite {
-    pub fn new(connection: Connection) -> SQLite {
+    pub fn new(connection: SqlitePool) -> SQLite {
         SQLite { connection }
     }
 }
 
-impl DeviceRepository for SQLite {
-    fn create_device(&self, request: &CreateDeviceRequest) -> Result<Device, DeviceError> {
-        if let Err(err) = self.connection.execute(
-            "INSERT INTO devices(api_key, mac_address) VALUES (?1, ?2)",
-            (&request.api_key, &request.mac_address.inner_value()),
-        ) {
-            error!("cannot create a device: {}", err);
-            return Err(DeviceError::Unkwnown);
-        }
+struct SQLiteDevice {
+    api_key: Option<String>,
+    mac_address: String,
+    friendly_id: Option<String>,
+}
 
-        Ok(Device::new(
-            request.api_key.clone(),
-            request.mac_address.clone(),
-        ))
+impl TryInto<Device> for SQLiteDevice {
+    type Error = DeviceError;
+
+    fn try_into(self) -> Result<Device, Self::Error> {
+        match MacAddress::new(&self.mac_address) {
+            Ok(mac_address) => Ok(Device {
+                api_key: self.api_key.unwrap_or("".to_string()),
+                mac_address,
+                friendly_name: self.friendly_id.unwrap_or("".to_string()),
+            }),
+            Err(err) => {
+                error!("cannot parse the mac address {}", err);
+                Err(DeviceError::Unkwnown)
+            }
+        }
+    }
+}
+
+impl DeviceRepository for SQLite {
+    async fn create_device(&self, request: &CreateDeviceRequest) -> Result<Device, DeviceError> {
+        let api_key = if request.api_key.is_empty() {
+            Device::generate_api_key()
+        } else {
+            request.api_key.clone()
+        };
+        let mac_address = request.mac_address.inner_value();
+
+        match query_as!(
+            SQLiteDevice,
+            "INSERT INTO devices(api_key, mac_address) VALUES (?, ?) RETURNING api_key, mac_address, '' as friendly_id",
+            api_key,
+            mac_address,
+        )
+        .fetch_one(&self.connection)
+        .await
+        {
+            Ok(device) => device.try_into(),
+            Err(err) => {
+                error!("cannot retrieve the device {}", err);
+                return Err(DeviceError::Unkwnown);
+            }
+        }
     }
 
-    fn get_device(&self, request: &GetDeviceRequest) -> Result<Device, DeviceError> {
-        match self.connection.query_row(
-            "SELECT api_key, mac_address, friendly_id FROM devices WHERE mac_address = $1",
-            [request.mac_address.inner_value()],
-            |row| {
-                let mac_address: String = row.get(1)?;
-                let parsed_mac_address = match MacAddress::new(&mac_address) {
-                    Ok(it) => Ok(it),
-                    Err(err) => {
-                        error!("cannot parse the mac address {}", err);
-                        Err(FromSqlError::InvalidType)
-                    }
-                };
-                let friendly_name = match row.get(2) {
-                    Ok(val) => val,
-                    Err(_) => "".to_string(),
-                };
-                Ok(Device::get(row.get(0)?, parsed_mac_address?, friendly_name))
-            },
-        ) {
-            Ok(device) => return Ok(device),
+    async fn get_device(&self, request: &GetDeviceRequest) -> Result<Device, DeviceError> {
+        let mac_address = request.mac_address.inner_value();
+        match query_as!(
+            SQLiteDevice,
+            "SELECT api_key, mac_address, friendly_id FROM devices WHERE mac_address = ?",
+            mac_address,
+        )
+        .fetch_one(&self.connection)
+        .await
+        {
+            Ok(device) => device.try_into(),
             Err(err) => {
                 error!("cannot retrieve the device {}", err);
                 return Err(DeviceError::Unkwnown);

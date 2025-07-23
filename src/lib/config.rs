@@ -1,6 +1,5 @@
 use std::{env, fmt::Display};
 
-
 const DATABASE_URL: &str = "DATABASE_URL";
 
 const LOG_LEVEL: &str = "LOG_LEVEL";
@@ -19,6 +18,15 @@ impl Config {
             log_level_var: LOG_LEVEL.to_string(),
         })
     }
+
+    pub fn get_db_type(&self) -> DBType {
+        // TODO add logic to recognize db based on url
+        return DBType::SQLite;
+    }
+}
+
+pub enum DBType {
+    SQLite,
 }
 
 #[derive(Debug)]

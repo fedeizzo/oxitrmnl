@@ -1,5 +1,5 @@
 [package]
-name = "openapi"
+name = "oxitrmnl-openapi"
 version = "0.0.1"
 authors = ["example@example.com"]
 description = "API for interacting with oxitrmnl webserver"
