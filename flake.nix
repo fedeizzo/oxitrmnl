@@ -6,12 +6,14 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
     devshell.url = "github:numtide/devshell";
+    git-hooks-nix.url = "github:cachix/git-hooks.nix";
   };
 
   outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.devshell.flakeModule
+        inputs.git-hooks-nix.flakeModule
       ];
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
@@ -21,31 +23,11 @@
             inputs.rust-overlay.overlays.default
           ];
         };
+        imports = [
+          ./nix/parts/devshell.nix
+          ./nix/parts/git-hooks.nix
+        ];
         packages.default = pkgs.hello;
-        devshells.default = {
-          env = [
-            {
-              name = "DATABASE_URL";
-              value = "sqlite://data.db";
-            }
-          ];
-          packages = with pkgs; [
-            openssl
-            pkg-config
-            openapi-generator-cli
-            sqlite.out
-            sqlite-web
-            sqlx-cli
-            (rust-bin.stable.latest.default.override {
-              extensions = [ "rust-analyzer" "rust-src" "rustfmt" "clippy" ];
-            })
-
-            hurl
-
-            nodejs
-            package-version-server
-          ];
-        };
       };
     };
 }
