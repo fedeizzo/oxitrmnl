@@ -1,6 +1,7 @@
 /target
 *.db
 *.db-shm
+.sqlx
 
 # nix
 .direnv
